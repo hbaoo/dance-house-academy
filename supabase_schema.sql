@@ -7,6 +7,7 @@ create table public.classes (
   studio text not null,
   age_range text not null,
   instructor jsonb not null, -- Stores { id, name, role, avatar }
+  price numeric not null default 0,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -39,10 +40,10 @@ create table public.contacts (
 );
 
 -- Insert Sample Data (Optional)
-insert into public.classes (title, time, duration, studio, age_range, instructor)
+insert into public.classes (title, time, duration, studio, age_range, instructor, price)
 values 
-  ('Lớp Ballet Cơ Bản', '08:30 AM', '60 MIN', 'Phòng A1', 'Trẻ em (4-6 tuổi)', '{"id": 1, "name": "Cô Minh Thư", "role": "Giám đốc chuyên môn", "avatar": "https://i.pravatar.cc/150?u=thu"}'),
-  ('Kỹ thuật Pointe Nâng cao', '10:00 AM', '90 MIN', 'Phòng B2', 'Thiếu niên (12+)', '{"id": 2, "name": "Thầy Hoàng Nam", "role": "Biên đạo múa", "avatar": "https://i.pravatar.cc/150?u=nam"}');
+  ('Lớp Ballet Cơ Bản', '08:30 AM', '60 MIN', 'Phòng A1', 'Trẻ em (4-6 tuổi)', '{"id": 1, "name": "Cô Minh Thư", "role": "Giám đốc chuyên môn", "avatar": "https://i.pravatar.cc/150?u=thu"}', 2000000),
+  ('Kỹ thuật Pointe Nâng cao', '10:00 AM', '90 MIN', 'Phòng B2', 'Thiếu niên (12+)', '{"id": 2, "name": "Thầy Hoàng Nam", "role": "Biên đạo múa", "avatar": "https://i.pravatar.cc/150?u=nam"}', 3500000);
 
 insert into public.products (name, price, image, badge)
 values

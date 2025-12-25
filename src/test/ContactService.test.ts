@@ -1,9 +1,9 @@
 
 import { describe, it, expect, vi } from 'vitest';
-import { createContact } from '../services/apiService';
+import { createContact } from '../../services/apiService';
 
 // Mock supabase since we don't want to hit real DB in basic unit tests
-vi.mock('../services/supabaseClient', () => ({
+vi.mock('../../services/supabaseClient', () => ({
     supabase: {
         from: vi.fn(() => ({
             insert: vi.fn(() => ({

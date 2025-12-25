@@ -17,7 +17,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, amount, it
     if (!isOpen) return null;
 
     // Cấu hình VietQR
-    const BANK_ID = 'ICB'; // Vietcombank
+    const BANK_ID = 'VCB'; // Vietcombank
     const ACCOUNT_NO = '1043710254';
     const TEMPLATE = 'compact2'; // Giao diện QR tối giản
 
