@@ -1,23 +1,37 @@
-
 import React, { useState } from 'react';
 import SimplePage from '../../components/SimplePage';
 import { MapPin, Mail, Phone, Clock, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useToast } from '../../contexts/ToastContext';
+import { createContact } from '../../services/apiService';
 
 const Contact: React.FC = () => {
     const { t } = useLanguage();
     const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        message: ''
+    });
 
-    const handleSubmit = () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!formData.name || !formData.email || !formData.message) {
+            showToast("Vui lòng điền đầy đủ thông tin", "error");
+            return;
+        }
+
         setIsSubmitting(true);
-        // Simulate network request
-        setTimeout(() => {
+        try {
+            await createContact(formData);
             setIsSubmitting(false);
             showToast(t('form_success'), 'success');
-            // In a real app, you'd reset the form here
-        }, 1500);
+            setFormData({ name: '', email: '', message: '' });
+        } catch (error) {
+            setIsSubmitting(false);
+            showToast("Gửi lời nhắn thất bại. Vui lòng thử lại sau.", "error");
+        }
     };
 
     return (
@@ -62,23 +76,42 @@ const Contact: React.FC = () => {
 
                 <div className="bg-[#FCF8F9] p-8 rounded-[40px] border border-rose-100">
                     <h3 className="text-2xl serif mb-6">{t('contact_form_title')}</h3>
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">{t('form_name')}</label>
-                            <input type="text" className="w-full h-12 rounded-xl bg-white px-4 border border-slate-200 outline-none focus:border-rose-300 transition-colors" placeholder="Nguyễn Văn A" />
+                            <input
+                                type="text"
+                                required
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full h-12 rounded-xl bg-white px-4 border border-slate-200 outline-none focus:border-rose-300 transition-colors"
+                                placeholder="Nguyễn Văn A"
+                            />
                         </div>
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">{t('form_email')}</label>
-                            <input type="email" className="w-full h-12 rounded-xl bg-white px-4 border border-slate-200 outline-none focus:border-rose-300 transition-colors" placeholder="email@example.com" />
+                            <input
+                                type="email"
+                                required
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                className="w-full h-12 rounded-xl bg-white px-4 border border-slate-200 outline-none focus:border-rose-300 transition-colors"
+                                placeholder="email@example.com"
+                            />
                         </div>
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">{t('form_message')}</label>
-                            <textarea className="w-full h-32 rounded-xl bg-white p-4 border border-slate-200 outline-none focus:border-rose-300 transition-colors resize-none" placeholder="Tôi muốn tìm hiểu về lớp học..." />
+                            <textarea
+                                required
+                                value={formData.message}
+                                onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                className="w-full h-32 rounded-xl bg-white p-4 border border-slate-200 outline-none focus:border-rose-300 transition-colors resize-none"
+                                placeholder="Tôi muốn tìm hiểu về lớp học..."
+                            />
                         </div>
                         <button
-                            type="button"
+                            type="submit"
                             disabled={isSubmitting}
-                            onClick={handleSubmit}
                             className="w-full bg-slate-900 text-white h-12 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-rose-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : t('form_submit')}

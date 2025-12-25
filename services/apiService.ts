@@ -1,5 +1,5 @@
 
-import { DanceClass, Product } from '../types';
+import { DanceClass, Product, Contact } from '../types';
 import { supabase, isSupabaseReady } from './supabaseClient';
 
 // Initial Data (Fallback)
@@ -126,4 +126,21 @@ export const deleteProduct = async (id: number): Promise<void> => {
   const products = getStorage<Product[]>('dance_products', INITIAL_PRODUCTS);
   const updatedProducts = products.filter(p => p.id !== id);
   setStorage('dance_products', updatedProducts);
+};
+
+// --- Contacts Service ---
+export const createContact = async (contact: Contact): Promise<Contact> => {
+  if (shouldUseSupabase()) {
+    const { data, error } = await supabase.from('contacts').insert([contact]).select().single();
+    if (error) {
+      console.error("Supabase contact error:", error);
+      throw error;
+    }
+    return data;
+  }
+  await delay(300);
+  const contacts = getStorage<Contact[]>('dance_contacts', []);
+  const newContact = { ...contact, id: Date.now(), created_at: new Date().toISOString() };
+  setStorage('dance_contacts', [...contacts, newContact]);
+  return newContact;
 };
