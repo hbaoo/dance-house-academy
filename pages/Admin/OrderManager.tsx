@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { fetchOrders, updateOrderStatus } from '../../services/apiService';
+import { sendOrderConfirmationEmail } from '../../services/emailService';
 import { Order } from '../../types';
 import { CheckCircle2, XCircle, Clock, RefreshCw, Loader2, Search } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
@@ -27,10 +28,22 @@ const OrderManager: React.FC = () => {
         loadOrders();
     }, []);
 
-    const handleUpdateStatus = async (id: number, newStatus: 'completed' | 'cancelled') => {
+    const handleUpdateStatus = async (order: Order, newStatus: 'completed' | 'cancelled') => {
         try {
-            await updateOrderStatus(id, newStatus);
-            showToast("Đã cập nhật trạng thái đơn hàng", "success");
+            await updateOrderStatus(order.id!, newStatus);
+
+            if (newStatus === 'completed') {
+                showToast("Đã xác nhận & Gửi email thông báo", "success");
+                await sendOrderConfirmationEmail({
+                    customerName: order.customer_name,
+                    orderCode: order.order_code,
+                    itemName: order.item_name,
+                    amount: order.amount
+                });
+            } else {
+                showToast("Đã hủy đơn hàng", "info");
+            }
+
             loadOrders();
         } catch (error) {
             showToast("Cập nhật thất bại", "error");
@@ -134,14 +147,14 @@ const OrderManager: React.FC = () => {
                                             {order.status === 'pending' && (
                                                 <div className="flex justify-end gap-2">
                                                     <button
-                                                        onClick={() => handleUpdateStatus(order.id!, 'completed')}
+                                                        onClick={() => handleUpdateStatus(order, 'completed')}
                                                         className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
                                                         title="Xác nhận thanh toán"
                                                     >
                                                         <CheckCircle2 className="w-5 h-5" />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleUpdateStatus(order.id!, 'cancelled')}
+                                                        onClick={() => handleUpdateStatus(order, 'cancelled')}
                                                         className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-500 hover:text-white transition-all shadow-sm"
                                                         title="Hủy đơn"
                                                     >
