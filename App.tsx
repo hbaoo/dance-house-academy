@@ -9,6 +9,7 @@ import AdminLayout from './pages/Admin/Layout';
 import ClassManager from './pages/Admin/ClassManager';
 import ProductManager from './pages/Admin/ProductManager';
 import OrderManager from './pages/Admin/OrderManager';
+import ContactManager from './pages/Admin/ContactManager';
 import RequireAuth from './components/RequireAuth';
 import PublicNavbar from './components/PublicNavbar';
 import PublicFooter from './components/PublicFooter';
@@ -253,6 +254,7 @@ const App: React.FC = () => {
         <Route path="classes" element={<ClassManager />} />
         <Route path="products" element={<ProductManager />} />
         <Route path="orders" element={<OrderManager />} />
+        <Route path="contacts" element={<ContactManager />} />
         <Route index element={<ClassManager />} />
       </Route>
     </Routes>

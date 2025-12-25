@@ -147,6 +147,28 @@ export const createContact = async (contact: Contact): Promise<Contact> => {
   return newContact;
 };
 
+export const fetchContacts = async (): Promise<Contact[]> => {
+  if (shouldUseSupabase()) {
+    const { data, error } = await supabase.from('contacts').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+  await delay(300);
+  return getStorage<Contact[]>('dance_contacts', []);
+};
+
+export const deleteContact = async (id: number): Promise<void> => {
+  if (shouldUseSupabase()) {
+    const { error } = await supabase.from('contacts').delete().eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  await delay(300);
+  const contacts = getStorage<Contact[]>('dance_contacts', []);
+  const updatedContacts = contacts.filter(c => c.id !== id);
+  setStorage('dance_contacts', updatedContacts);
+};
+
 // --- Orders Service ---
 export const createOrder = async (order: Order): Promise<Order> => {
   if (shouldUseSupabase()) {

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, ShoppingBag, LogOut, ArrowLeft, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Calendar, ShoppingBag, LogOut, ArrowLeft, CreditCard, MessageSquare } from 'lucide-react';
 
 const AdminLayout: React.FC = () => {
     const navigate = useNavigate();
@@ -36,6 +36,13 @@ const AdminLayout: React.FC = () => {
                     >
                         <CreditCard className="w-5 h-5" />
                         <span className="font-medium text-sm">Quản lý Đơn hàng</span>
+                    </NavLink>
+                    <NavLink
+                        to="/admin/contacts"
+                        className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                    >
+                        <MessageSquare className="w-5 h-5" />
+                        <span className="font-medium text-sm">Liên hệ & Phản hồi</span>
                     </NavLink>
                 </nav>
 
