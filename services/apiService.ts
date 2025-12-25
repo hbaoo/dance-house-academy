@@ -173,3 +173,15 @@ export const fetchOrders = async (): Promise<Order[]> => {
   await delay(300);
   return getStorage<Order[]>('dance_orders', []);
 };
+
+export const updateOrderStatus = async (id: number, status: 'pending' | 'completed' | 'cancelled'): Promise<void> => {
+  if (shouldUseSupabase()) {
+    const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  await delay(300);
+  const orders = getStorage<Order[]>('dance_orders', []);
+  const updatedOrders = orders.map(o => o.id === id ? { ...o, status } : o);
+  setStorage('dance_orders', updatedOrders);
+};

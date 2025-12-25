@@ -8,6 +8,7 @@ import Login from './pages/Admin/Login';
 import AdminLayout from './pages/Admin/Layout';
 import ClassManager from './pages/Admin/ClassManager';
 import ProductManager from './pages/Admin/ProductManager';
+import OrderManager from './pages/Admin/OrderManager';
 import RequireAuth from './components/RequireAuth';
 import PublicNavbar from './components/PublicNavbar';
 import PublicFooter from './components/PublicFooter';
@@ -251,6 +252,7 @@ const App: React.FC = () => {
       }>
         <Route path="classes" element={<ClassManager />} />
         <Route path="products" element={<ProductManager />} />
+        <Route path="orders" element={<OrderManager />} />
         <Route index element={<ClassManager />} />
       </Route>
     </Routes>
