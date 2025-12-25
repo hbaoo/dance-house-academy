@@ -1,5 +1,5 @@
 
-import { DanceClass, Product, Contact } from '../types';
+import { DanceClass, Product, Contact, Order } from '../types';
 import { supabase, isSupabaseReady } from './supabaseClient';
 
 // Initial Data (Fallback)
@@ -11,7 +11,8 @@ const INITIAL_CLASSES: DanceClass[] = [
     title: 'Lớp Ballet Cơ Bản',
     studio: 'Phòng A1',
     age_range: 'Trẻ em (4-6 tuổi)',
-    instructor: { id: 1, name: 'Cô Minh Thư', role: 'Giám đốc chuyên môn', avatar: 'https://i.pravatar.cc/150?u=thu' }
+    instructor: { id: 1, name: 'Cô Minh Thư', role: 'Giám đốc chuyên môn', avatar: 'https://i.pravatar.cc/150?u=thu' },
+    price: 2000000
   },
   {
     id: 2,
@@ -20,7 +21,8 @@ const INITIAL_CLASSES: DanceClass[] = [
     title: 'Kỹ thuật Pointe Nâng cao',
     studio: 'Phòng B2',
     age_range: 'Thiếu niên (12+)',
-    instructor: { id: 2, name: 'Thầy Hoàng Nam', role: 'Biên đạo múa', avatar: 'https://i.pravatar.cc/150?u=nam' }
+    instructor: { id: 2, name: 'Thầy Hoàng Nam', role: 'Biên đạo múa', avatar: 'https://i.pravatar.cc/150?u=nam' },
+    price: 3500000
   }
 ];
 
@@ -143,4 +145,31 @@ export const createContact = async (contact: Contact): Promise<Contact> => {
   const newContact = { ...contact, id: Date.now(), created_at: new Date().toISOString() };
   setStorage('dance_contacts', [...contacts, newContact]);
   return newContact;
+};
+
+// --- Orders Service ---
+export const createOrder = async (order: Order): Promise<Order> => {
+  if (shouldUseSupabase()) {
+    const { data, error } = await supabase.from('orders').insert([order]).select().single();
+    if (error) {
+      console.error("Supabase order error:", error);
+      throw error;
+    }
+    return data;
+  }
+  await delay(300);
+  const orders = getStorage<Order[]>('dance_orders', []);
+  const newOrder = { ...order, id: Date.now(), created_at: new Date().toISOString() };
+  setStorage('dance_orders', [...orders, newOrder]);
+  return newOrder;
+};
+
+export const fetchOrders = async (): Promise<Order[]> => {
+  if (shouldUseSupabase()) {
+    const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+  await delay(300);
+  return getStorage<Order[]>('dance_orders', []);
 };

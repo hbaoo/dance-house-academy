@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ShoppingBag, ChevronRight, Loader2, Heart, MessageCircle } from 'lucide-react';
-import { fetchClasses, fetchProducts } from './services/apiService';
+import { fetchClasses, fetchProducts, createOrder } from './services/apiService';
 import { getDanceAdvisorResponse } from './services/geminiService';
-import { DanceClass, Product } from './types';
+import { DanceClass, Product, Order } from './types';
 import Login from './pages/Admin/Login';
 import AdminLayout from './pages/Admin/Layout';
 import ClassManager from './pages/Admin/ClassManager';
@@ -17,6 +16,7 @@ import Instructors from './pages/Public/Instructors';
 import Facilities from './pages/Public/Facilities';
 import News from './pages/Public/News';
 import Contact from './pages/Public/Contact';
+import PaymentModal from './components/PaymentModal';
 
 import { useLanguage } from './contexts/LanguageContext';
 import { useToast } from './contexts/ToastContext';
@@ -31,6 +31,11 @@ const HomePage: React.FC = () => {
   const [aiInput, setAiInput] = useState('');
   const [aiOutput, setAiOutput] = useState<string | null>(null);
   const [isAiThinking, setIsAiThinking] = useState(false);
+
+  // Payment State
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<{ name: string, price: number } | null>(null);
+  const [currentOrderCode, setCurrentOrderCode] = useState('');
 
   useEffect(() => {
     Promise.all([fetchClasses(), fetchProducts()]).then(([c, p]) => {
@@ -47,6 +52,27 @@ const HomePage: React.FC = () => {
     const result = await getDanceAdvisorResponse(aiInput);
     setAiOutput(result);
     setIsAiThinking(false);
+  };
+
+  const handleStartPayment = async (name: string, price: number) => {
+    const orderCode = `DH${Math.floor(100000 + Math.random() * 900000)}`;
+    const newOrder: Order = {
+      customer_name: 'Khách hàng mới',
+      customer_email: 'customer@example.com',
+      item_name: name,
+      amount: price,
+      status: 'pending',
+      order_code: orderCode
+    };
+
+    try {
+      await createOrder(newOrder);
+      setSelectedItem({ name, price });
+      setCurrentOrderCode(orderCode);
+      setIsPaymentModalOpen(true);
+    } catch (error) {
+      showToast("Không thể khởi tạo đơn hàng. Vui lòng thử lại.", "error");
+    }
   };
 
   return (
@@ -149,7 +175,7 @@ const HomePage: React.FC = () => {
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{cls.instructor.role}</p>
                       </div>
                     </div>
-                    <button onClick={() => showToast("Đã ghi nhận yêu cầu đăng ký của bạn! Bộ phận tuyển sinh sẽ liên hệ trong 24h.", 'success')} className="bg-white border border-rose-100 text-rose-500 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all">
+                    <button onClick={() => handleStartPayment(cls.title, cls.price)} className="bg-white border border-rose-100 text-rose-500 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all">
                       {t('register_btn')}
                     </button>
                   </div>
@@ -178,7 +204,7 @@ const HomePage: React.FC = () => {
                     </span>
                   )}
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button onClick={() => showToast("Sản phẩm đã được thêm vào giỏ hàng!", 'success')} className="bg-white text-slate-900 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                    <button onClick={() => handleStartPayment(prod.name, prod.price)} className="bg-white text-slate-900 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform">
                       <ShoppingBag className="w-4 h-4" /> {t('add_to_cart')}
                     </button>
                   </div>
@@ -192,6 +218,16 @@ const HomePage: React.FC = () => {
       </section>
 
       <PublicFooter />
+
+      {selectedItem && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          amount={selectedItem.price}
+          itemName={selectedItem.name}
+          orderCode={currentOrderCode}
+        />
+      )}
     </div>
   );
 };

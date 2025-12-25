@@ -14,6 +14,7 @@ export interface DanceClass {
   studio: string;
   age_range: string;
   instructor: Instructor;
+  price: number;
 }
 
 export interface Product {
@@ -29,5 +30,16 @@ export interface Contact {
   name: string;
   email: string;
   message: string;
+  created_at?: string;
+}
+
+export interface Order {
+  id?: number;
+  customer_name: string;
+  customer_email: string;
+  item_name: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  order_code: string;
   created_at?: string;
 }
