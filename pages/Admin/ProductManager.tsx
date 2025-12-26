@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Loader2, X, Edit2 } from 'lucide-react';
 import { Product } from '../../types';
-import { fetchProducts, addProduct, deleteProduct, updateProduct } from '../../services/apiService';
+import { fetchProducts, addProduct, deleteProduct, updateProduct, uploadImage } from '../../services/apiService';
 import { useToast } from '../../contexts/ToastContext';
 
 const ProductManager: React.FC = () => {
@@ -11,6 +11,8 @@ const ProductManager: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const [formData, setFormData] = useState<Partial<Product>>({
         name: '',
@@ -29,6 +31,26 @@ const ProductManager: React.FC = () => {
     useEffect(() => {
         loadData();
     }, []);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Show preview immediately
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewUrl(objectUrl);
+
+        try {
+            setIsUploading(true);
+            const uploadedUrl = await uploadImage(file);
+            setFormData(prev => ({ ...prev, image: uploadedUrl }));
+            showToast("Đã tải ảnh lên thành công", "success");
+        } catch (error) {
+            showToast("Lỗi khi tải ảnh lên", "error");
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleDelete = async (id: number) => {
         if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
@@ -50,18 +72,20 @@ const ProductManager: React.FC = () => {
             image: prod.image,
             badge: prod.badge || ''
         });
+        setPreviewUrl(prod.image);
         setIsModalOpen(true);
     };
 
     const handleOpenAddModal = () => {
         setEditingProduct(null);
         setFormData({ name: '', price: 0, image: '', badge: '' });
+        setPreviewUrl(null);
         setIsModalOpen(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.name || !formData.price) return;
+        if (!formData.name || !formData.price || isUploading) return;
 
         try {
             if (editingProduct) {
@@ -79,6 +103,7 @@ const ProductManager: React.FC = () => {
             setIsModalOpen(false);
             setEditingProduct(null);
             setFormData({ name: '', price: 0, image: '', badge: '' });
+            setPreviewUrl(null);
             loadData();
         } catch (error) {
             showToast("Có lỗi xảy ra, vui lòng thử lại", "error");
@@ -144,24 +169,41 @@ const ProductManager: React.FC = () => {
                             <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="flex flex-col items-center gap-4 p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 group hover:border-rose-300 transition-colors">
+                                {previewUrl ? (
+                                    <div className="relative w-32 h-32 rounded-2xl overflow-hidden shadow-md">
+                                        <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
+                                        {isUploading && (
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                                <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center border border-slate-100">
+                                        <Plus className="w-8 h-8 text-slate-300" />
+                                    </div>
+                                )}
+                                <label className="cursor-pointer bg-white px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-200 hover:border-rose-500 hover:text-rose-500 transition-all">
+                                    {isUploading ? "Đang tải..." : "Chọn ảnh từ máy tính"}
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isUploading} />
+                                </label>
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Tên sản phẩm</label>
-                                <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="VD: Giày Múa Mới" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus://ring-rose-500" placeholder="VD: Giày Múa Mới" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Giá (VND)</label>
                                 <input type="number" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="VD: 500000" value={formData.price || ''} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">URL Hình ảnh</label>
-                                <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="https://..." value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} />
-                            </div>
-                            <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Nhãn (Tùy chọn)</label>
                                 <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="VD: NEW, SALE" value={formData.badge} onChange={e => setFormData({ ...formData, badge: e.target.value })} />
                             </div>
-                            <button type="submit" className="w-full bg-rose-500 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-rose-600 transition-all mt-4">
-                                Lưu sản phẩm
+                            <button type="submit" disabled={isUploading} className="w-full bg-rose-500 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-rose-600 transition-all mt-4 disabled:opacity-50">
+                                {isUploading ? "Vui lòng đợi..." : "Lưu sản phẩm"}
                             </button>
                         </form>
                     </div>

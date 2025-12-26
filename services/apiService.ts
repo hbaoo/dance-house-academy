@@ -231,3 +231,36 @@ export const updateOrderStatus = async (id: number, status: 'pending' | 'complet
   const updatedOrders = orders.map(o => o.id === id ? { ...o, status } : o);
   setStorage('dance_orders', updatedOrders);
 };
+
+// --- Storage / Upload Service ---
+export const uploadImage = async (file: File): Promise<string> => {
+  if (shouldUseSupabase()) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('dance-house')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('dance-house')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  }
+
+  // Fallback for local development without Supabase: return a data URL
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      resolve(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  });
+};

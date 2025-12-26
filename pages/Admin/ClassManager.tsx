@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Edit2, Loader2, X } from 'lucide-react';
 import { DanceClass } from '../../types';
-import { fetchClasses, addClass, deleteClass, updateClass } from '../../services/apiService';
+import { fetchClasses, addClass, deleteClass, updateClass, uploadImage } from '../../services/apiService';
 import { useToast } from '../../contexts/ToastContext';
 
 const ClassManager: React.FC = () => {
@@ -11,6 +11,8 @@ const ClassManager: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingClass, setEditingClass] = useState<DanceClass | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState<Partial<DanceClass>>({
@@ -20,7 +22,7 @@ const ClassManager: React.FC = () => {
         studio: '',
         age_range: '',
         price: 0,
-        instructor: { id: Date.now(), name: 'Giảng viên mới', role: 'Giáo viên', avatar: 'https://i.pravatar.cc/150' }
+        instructor: { id: Date.now(), name: '', role: '', avatar: 'https://i.pravatar.cc/150' }
     });
 
     const loadData = async () => {
@@ -33,6 +35,28 @@ const ClassManager: React.FC = () => {
     useEffect(() => {
         loadData();
     }, []);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewUrl(objectUrl);
+
+        try {
+            setIsUploading(true);
+            const uploadedUrl = await uploadImage(file);
+            setFormData(prev => ({
+                ...prev,
+                instructor: { ...prev.instructor!, avatar: uploadedUrl }
+            }));
+            showToast("Đã tải ảnh lên thành công", "success");
+        } catch (error) {
+            showToast("Lỗi khi tải ảnh lên", "error");
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleDelete = async (id: number) => {
         if (confirm('Bạn có chắc muốn xóa lớp học này?')) {
@@ -57,6 +81,7 @@ const ClassManager: React.FC = () => {
             price: cls.price || 0,
             instructor: cls.instructor
         });
+        setPreviewUrl(cls.instructor.avatar);
         setIsModalOpen(true);
     };
 
@@ -69,14 +94,15 @@ const ClassManager: React.FC = () => {
             studio: '',
             age_range: '',
             price: 0,
-            instructor: { id: Date.now(), name: 'Giảng viên mới', role: 'Giáo viên', avatar: 'https://i.pravatar.cc/150' }
+            instructor: { id: Date.now(), name: '', role: '', avatar: 'https://i.pravatar.cc/150' }
         });
+        setPreviewUrl(null);
         setIsModalOpen(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.title || !formData.time) return;
+        if (!formData.title || !formData.time || isUploading) return;
 
         try {
             if (editingClass) {
@@ -89,7 +115,8 @@ const ClassManager: React.FC = () => {
 
             setIsModalOpen(false);
             setEditingClass(null);
-            setFormData({ title: '', time: '', duration: '', studio: '', age_range: '', price: 0, instructor: { id: Date.now(), name: 'Giảng viên mới', role: 'Giáo viên', avatar: 'https://i.pravatar.cc/150' } });
+            setFormData({ title: '', time: '', duration: '', studio: '', age_range: '', price: 0, instructor: { id: Date.now(), name: '', role: '', avatar: 'https://i.pravatar.cc/150' } });
+            setPreviewUrl(null);
             loadData();
         } catch (error) {
             showToast("Có lỗi xảy ra, vui lòng thử lại", "error");
@@ -157,6 +184,33 @@ const ClassManager: React.FC = () => {
                             <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                <div className="relative w-20 h-20 rounded-full overflow-hidden bg-slate-200 shadow-inner">
+                                    {previewUrl ? (
+                                        <img src={previewUrl} className="w-full h-full object-cover" alt="Instructor avatar" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-400 italic text-[8px]">No Photo</div>
+                                    )}
+                                    {isUploading && (
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                            <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Ảnh giảng viên</label>
+                                    <label className="cursor-pointer inline-block bg-white px-4 py-2 rounded-lg text-xs font-semibold border border-slate-200 hover:border-rose-500 transition-colors">
+                                        {isUploading ? "Đang tải..." : "Tải ảnh lên"}
+                                        <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isUploading} />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Tên giảng viên</label>
+                                <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="VD: Cô Minh Thư" value={formData.instructor?.name} onChange={e => setFormData({ ...formData, instructor: { ...formData.instructor!, name: e.target.value } })} />
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Giờ học</label>
@@ -185,8 +239,8 @@ const ClassManager: React.FC = () => {
                                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Giá tiền (VND)</label>
                                 <input type="number" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="VD: 2000000" value={formData.price || ''} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} />
                             </div>
-                            <button type="submit" className="w-full bg-rose-500 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-rose-600 transition-all mt-4">
-                                Lưu lớp học
+                            <button type="submit" disabled={isUploading} className="w-full bg-rose-500 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-rose-600 transition-all mt-4 disabled:opacity-50">
+                                {isUploading ? "Vui lòng đợi..." : "Lưu lớp học"}
                             </button>
                         </form>
                     </div>
