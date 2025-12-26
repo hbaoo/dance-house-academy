@@ -93,6 +93,18 @@ export const deleteClass = async (id: number): Promise<void> => {
   setStorage('dance_classes', updatedClasses);
 };
 
+export const updateClass = async (id: number, cls: Partial<DanceClass>): Promise<void> => {
+  if (shouldUseSupabase()) {
+    const { error } = await supabase.from('classes').update(cls).eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  await delay(300);
+  const classes = getStorage<DanceClass[]>('dance_classes', []);
+  const updatedClasses = classes.map(c => c.id === id ? { ...c, ...cls } : c);
+  setStorage('dance_classes', updatedClasses);
+};
+
 // --- Products Service ---
 export const fetchProducts = async (): Promise<Product[]> => {
   if (shouldUseSupabase()) {
@@ -127,6 +139,18 @@ export const deleteProduct = async (id: number): Promise<void> => {
   await delay(300);
   const products = getStorage<Product[]>('dance_products', INITIAL_PRODUCTS);
   const updatedProducts = products.filter(p => p.id !== id);
+  setStorage('dance_products', updatedProducts);
+};
+
+export const updateProduct = async (id: number, prod: Partial<Product>): Promise<void> => {
+  if (shouldUseSupabase()) {
+    const { error } = await supabase.from('products').update(prod).eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  await delay(300);
+  const products = getStorage<Product[]>('dance_products', []);
+  const updatedProducts = products.map(p => p.id === id ? { ...p, ...prod } : p);
   setStorage('dance_products', updatedProducts);
 };
 

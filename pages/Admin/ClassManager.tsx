@@ -2,12 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Edit2, Loader2, X } from 'lucide-react';
 import { DanceClass } from '../../types';
-import { fetchClasses, addClass, deleteClass } from '../../services/apiService';
+import { fetchClasses, addClass, deleteClass, updateClass } from '../../services/apiService';
+import { useToast } from '../../contexts/ToastContext';
 
 const ClassManager: React.FC = () => {
+    const { showToast } = useToast();
     const [classes, setClasses] = useState<DanceClass[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingClass, setEditingClass] = useState<DanceClass | null>(null);
 
     // Form State
     const [formData, setFormData] = useState<Partial<DanceClass>>({
@@ -16,6 +19,7 @@ const ClassManager: React.FC = () => {
         duration: '',
         studio: '',
         age_range: '',
+        price: 0,
         instructor: { id: Date.now(), name: 'Giảng viên mới', role: 'Giáo viên', avatar: 'https://i.pravatar.cc/150' }
     });
 
@@ -32,19 +36,64 @@ const ClassManager: React.FC = () => {
 
     const handleDelete = async (id: number) => {
         if (confirm('Bạn có chắc muốn xóa lớp học này?')) {
-            await deleteClass(id);
-            loadData();
+            try {
+                await deleteClass(id);
+                showToast("Đã xóa lớp học", "info");
+                loadData();
+            } catch (error) {
+                showToast("Lỗi khi xóa lớp học", "error");
+            }
         }
+    };
+
+    const handleEdit = (cls: DanceClass) => {
+        setEditingClass(cls);
+        setFormData({
+            title: cls.title,
+            time: cls.time,
+            duration: cls.duration,
+            studio: cls.studio,
+            age_range: cls.age_range,
+            price: cls.price || 0,
+            instructor: cls.instructor
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleOpenAddModal = () => {
+        setEditingClass(null);
+        setFormData({
+            title: '',
+            time: '',
+            duration: '',
+            studio: '',
+            age_range: '',
+            price: 0,
+            instructor: { id: Date.now(), name: 'Giảng viên mới', role: 'Giáo viên', avatar: 'https://i.pravatar.cc/150' }
+        });
+        setIsModalOpen(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.title || !formData.time) return;
 
-        await addClass(formData as DanceClass);
-        setIsModalOpen(false);
-        setFormData({ title: '', time: '', duration: '', studio: '', age_range: '', instructor: { id: Date.now(), name: 'Giảng viên mới', role: 'Giáo viên', avatar: 'https://i.pravatar.cc/150' } });
-        loadData();
+        try {
+            if (editingClass) {
+                await updateClass(editingClass.id, formData);
+                showToast("Đã cập nhật lớp học thành công", "success");
+            } else {
+                await addClass(formData as DanceClass);
+                showToast("Đã thêm lớp học mới", "success");
+            }
+
+            setIsModalOpen(false);
+            setEditingClass(null);
+            setFormData({ title: '', time: '', duration: '', studio: '', age_range: '', price: 0, instructor: { id: Date.now(), name: 'Giảng viên mới', role: 'Giáo viên', avatar: 'https://i.pravatar.cc/150' } });
+            loadData();
+        } catch (error) {
+            showToast("Có lỗi xảy ra, vui lòng thử lại", "error");
+        }
     };
 
     return (
@@ -55,7 +104,7 @@ const ClassManager: React.FC = () => {
                     <p className="text-slate-500 text-sm">Thêm, sửa và xóa các lớp học trong hệ thống.</p>
                 </div>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={handleOpenAddModal}
                     className="bg-rose-500 text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-rose-600 transition-all shadow-lg"
                 >
                     <Plus className="w-4 h-4" /> Thêm lớp mới
@@ -83,7 +132,8 @@ const ClassManager: React.FC = () => {
                                     <td className="p-6 font-serif text-lg">{cls.title}</td>
                                     <td className="p-6 text-sm text-slate-600">{cls.studio}</td>
                                     <td className="p-6 text-sm text-slate-600">{cls.age_range}</td>
-                                    <td className="p-6 text-right">
+                                    <td className="p-6 text-right flex justify-end gap-2">
+                                        <button onClick={() => handleEdit(cls)} className="text-slate-400 hover:text-rose-500 p-2 transition-colors"><Edit2 className="w-4 h-4" /></button>
                                         <button onClick={() => handleDelete(cls.id)} className="text-slate-400 hover:text-red-500 p-2 transition-colors"><Trash2 className="w-4 h-4" /></button>
                                     </td>
                                 </tr>
@@ -103,7 +153,7 @@ const ClassManager: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
                     <div className="bg-white rounded-[40px] p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-300">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-serif">Thêm lớp học mới</h2>
+                            <h2 className="text-2xl font-serif">{editingClass ? 'Chỉnh sửa lớp học' : 'Thêm lớp học mới'}</h2>
                             <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -130,6 +180,10 @@ const ClassManager: React.FC = () => {
                                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Độ tuổi</label>
                                     <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="VD: 4-6 tuổi" value={formData.age_range} onChange={e => setFormData({ ...formData, age_range: e.target.value })} />
                                 </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Giá tiền (VND)</label>
+                                <input type="number" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="VD: 2000000" value={formData.price || ''} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} />
                             </div>
                             <button type="submit" className="w-full bg-rose-500 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-rose-600 transition-all mt-4">
                                 Lưu lớp học

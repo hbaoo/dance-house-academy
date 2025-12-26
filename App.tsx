@@ -57,6 +57,13 @@ const HomePage: React.FC = () => {
   };
 
   const handleStartPayment = async (name: string, price: number) => {
+    // Validate price
+    if (!price || price <= 0) {
+      showToast(`Không thể xác định giá cho ${name}. Vui lòng kiểm tra lại cấu hình lớp học.`, "error");
+      console.error(`Price is missing or invalid for ${name}:`, price);
+      return;
+    }
+
     const orderCode = `DH${Math.floor(100000 + Math.random() * 900000)}`;
     const newOrder: Order = {
       customer_name: 'Khách hàng mới',
@@ -68,12 +75,14 @@ const HomePage: React.FC = () => {
     };
 
     try {
+      console.log("Initiating order:", newOrder);
       await createOrder(newOrder);
       setSelectedItem({ name, price });
       setCurrentOrderCode(orderCode);
       setIsPaymentModalOpen(true);
-    } catch (error) {
-      showToast("Không thể khởi tạo đơn hàng. Vui lòng thử lại.", "error");
+    } catch (error: any) {
+      console.error("Order creation failed:", error);
+      showToast(`Lỗi: ${error.message || "Không thể khởi tạo đơn hàng"}. Kiểm tra bảng 'orders' trong Supabase.`, "error");
     }
   };
 
