@@ -22,11 +22,14 @@ import PaymentModal from './components/PaymentModal';
 
 import { useLanguage } from './contexts/LanguageContext';
 import { useToast } from './contexts/ToastContext';
+import { useCart } from './contexts/CartContext';
+import CartDrawer from './components/CartDrawer';
 
 // --- HomePage Component ---
 const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const { showToast } = useToast();
+  const { addToCart, cartCount, cartItems, totalAmount, clearCart } = useCart();
   const [classes, setClasses] = useState<DanceClass[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +39,8 @@ const HomePage: React.FC = () => {
 
   // Payment State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<{ name: string, price: number } | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{ name: string, price: number } | null>(null);
   const [currentOrderCode, setCurrentOrderCode] = useState('');
 
   useEffect(() => {
@@ -56,11 +60,9 @@ const HomePage: React.FC = () => {
     setIsAiThinking(false);
   };
 
-  const handleStartPayment = async (name: string, price: number) => {
-    // Validate price
+  const handleStartPayment = async (name: string, price: number, isCheckout: boolean = false) => {
     if (!price || price <= 0) {
-      showToast(`Không thể xác định giá cho ${name}. Vui lòng kiểm tra lại cấu hình lớp học.`, "error");
-      console.error(`Price is missing or invalid for ${name}:`, price);
+      showToast(`Không thể xác định giá. Vui lòng kiểm tra lại.`, "error");
       return;
     }
 
@@ -75,20 +77,45 @@ const HomePage: React.FC = () => {
     };
 
     try {
-      console.log("Initiating order:", newOrder);
       await createOrder(newOrder);
-      setSelectedItem({ name, price });
+      setPaymentDetails({ name, price });
       setCurrentOrderCode(orderCode);
       setIsPaymentModalOpen(true);
+      if (isCheckout) {
+        setIsCartOpen(false);
+        clearCart();
+      }
     } catch (error: any) {
-      console.error("Order creation failed:", error);
-      showToast(`Lỗi: ${error.message || "Không thể khởi tạo đơn hàng"}. Kiểm tra bảng 'orders' trong Supabase.`, "error");
+      showToast(`Lỗi: ${error.message || "Không thể khởi tạo đơn hàng"}`, "error");
     }
+  };
+
+  const handleCheckout = () => {
+    const itemSummary = cartItems.map(item => `${item.name} (x${item.quantity})`).join(', ');
+    handleStartPayment(`Boutique Order: ${itemSummary}`, totalAmount, true);
+  };
+
+  const handleAddToCart = (prod: Product) => {
+    addToCart(prod);
+    showToast(t('cart_added'), "success");
   };
 
   return (
     <div className="min-h-screen bg-white">
       <PublicNavbar />
+
+      {/* Floating Cart Button */}
+      <button
+        onClick={() => setIsCartOpen(true)}
+        className="fixed bottom-8 right-8 z-50 bg-slate-900 text-white p-5 rounded-full shadow-2xl hover:bg-rose-500 transition-all scale-110 active:scale-95 group"
+      >
+        <ShoppingBag className="w-6 h-6" />
+        {cartCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white animate-in zoom-in">
+            {cartCount}
+          </span>
+        )}
+      </button>
 
       {/* Hero Section */}
       <section id="hero" className="pt-32 pb-20 px-6">
@@ -207,21 +234,24 @@ const HomePage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
             {products.map(prod => (
               <div key={prod.id} className="group cursor-pointer">
-                <div className="relative aspect-[4/5] rounded-[50px] overflow-hidden mb-6 bg-slate-200">
-                  <img src={prod.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={prod.name} />
+                <div className="relative aspect-[4/5] rounded-[50px] overflow-hidden mb-6 bg-slate-200 shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                  <img src={prod.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={prod.name} />
                   {prod.badge && (
-                    <span className="absolute top-6 left-6 bg-rose-500 text-white text-[9px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest">
+                    <span className="absolute top-6 left-6 bg-rose-500 text-white text-[9px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
                       {prod.badge}
                     </span>
                   )}
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button onClick={() => handleStartPayment(prod.name, prod.price)} className="bg-white text-slate-900 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                      <ShoppingBag className="w-4 h-4" /> {t('add_to_cart')}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-6">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleAddToCart(prod); }}
+                      className="bg-white text-slate-900 px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-3 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-xl hover:bg-rose-500 hover:text-white"
+                    >
+                      <ShoppingBag className="w-5 h-5" /> {t('add_to_cart')}
                     </button>
                   </div>
                 </div>
                 <h3 className="text-xl serif text-center mb-2">{prod.name}</h3>
-                <p className="text-rose-500 font-bold text-center">{prod.price.toLocaleString('vi-VN')} VND</p>
+                <p className="text-rose-500 font-bold text-center tracking-wider">{prod.price.toLocaleString('vi-VN')} VND</p>
               </div>
             ))}
           </div>
@@ -230,12 +260,18 @@ const HomePage: React.FC = () => {
 
       <PublicFooter />
 
-      {selectedItem && (
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        onCheckout={handleCheckout}
+      />
+
+      {paymentDetails && (
         <PaymentModal
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
-          amount={selectedItem.price}
-          itemName={selectedItem.name}
+          amount={paymentDetails.price}
+          itemName={paymentDetails.name}
           orderCode={currentOrderCode}
         />
       )}

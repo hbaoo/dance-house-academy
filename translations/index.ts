@@ -59,7 +59,16 @@ export const translations = {
         hours_label: "Giờ làm việc",
         hours_value_1: "Thứ 2 - Thứ 6: 9:00 - 20:00",
         hours_value_2: "Thứ 7 - CN: 8:00 - 18:00",
-        form_success: "Tin nhắn của bạn đã được gửi thành công! Chúng tôi sẽ liên hệ lại sớm nhất."
+        form_success: "Tin nhắn của bạn đã được gửi thành công! Chúng tôi sẽ liên hệ lại sớm nhất.",
+
+        // Cart
+        cart_title: "Giỏ hàng của bạn",
+        cart_empty: "Giỏ hàng đang trống",
+        cart_total: "Tổng cộng",
+        cart_checkout: "Thanh toán ngay",
+        cart_items: "sản phẩm",
+        cart_added: "Đã thêm vào giỏ hàng",
+        cart_remove: "Xóa",
     },
     en: {
         // Navbar
@@ -120,7 +129,16 @@ export const translations = {
         hours_label: "Working Hours",
         hours_value_1: "Mon - Fri: 9:00 - 20:00",
         hours_value_2: "Sat - Sun: 8:00 - 18:00",
-        form_success: "Your message has been sent successfully! We will contact you soon."
+        form_success: "Your message has been sent successfully! We will contact you soon.",
+
+        // Cart
+        cart_title: "Your Shopping Cart",
+        cart_empty: "Your cart is empty",
+        cart_total: "Total",
+        cart_checkout: "Checkout Now",
+        cart_items: "items",
+        cart_added: "Added to cart",
+        cart_remove: "Remove",
     }
 };
 
