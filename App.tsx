@@ -10,6 +10,18 @@ import ClassManager from './pages/Admin/ClassManager';
 import ProductManager from './pages/Admin/ProductManager';
 import OrderManager from './pages/Admin/OrderManager';
 import ContactManager from './pages/Admin/ContactManager';
+import WebSettings from './pages/Admin/WebSettings';
+import StudentManager from './pages/Admin/StudentManager';
+import TransactionManager from './pages/Admin/TransactionManager';
+import MembershipManager from './pages/Admin/MembershipManager';
+import NewsManager from './pages/Admin/NewsManager';
+import AttendanceManager from './pages/Admin/AttendanceManager';
+import PackageManager from './pages/Admin/PackageManager';
+import LeadManager from './pages/Admin/LeadManager';
+import Dashboard from './pages/Admin/Dashboard';
+import StudentLogin from './pages/Student/Login';
+import StudentDashboard from './pages/Student/Dashboard';
+import RevenueReport from './pages/Admin/Reports/RevenueReport';
 import RequireAuth from './components/RequireAuth';
 import PublicNavbar from './components/PublicNavbar';
 import PublicFooter from './components/PublicFooter';
@@ -18,17 +30,23 @@ import Instructors from './pages/Public/Instructors';
 import Facilities from './pages/Public/Facilities';
 import News from './pages/Public/News';
 import Contact from './pages/Public/Contact';
+import Packages from './pages/Public/Packages';
+import Checkout from './pages/Public/Checkout';
+import PaymentSuccess from './pages/Public/PaymentSuccess';
+import PaymentFailed from './pages/Public/PaymentFailed';
 import PaymentModal from './components/PaymentModal';
 
 import { useLanguage } from './contexts/LanguageContext';
 import { useToast } from './contexts/ToastContext';
 import { useCart } from './contexts/CartContext';
+import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import CartDrawer from './components/CartDrawer';
 
 // --- HomePage Component ---
 const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const { showToast } = useToast();
+  const { settings } = useSettings();
   const { addToCart, cartCount, cartItems, totalAmount, clearCart } = useCart();
   const [classes, setClasses] = useState<DanceClass[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -67,26 +85,14 @@ const HomePage: React.FC = () => {
     }
 
     const orderCode = `DH${Math.floor(100000 + Math.random() * 900000)}`;
-    const newOrder: Order = {
-      customer_name: 'Khách hàng mới',
-      customer_email: 'customer@example.com',
-      item_name: name,
-      amount: price,
-      status: 'pending',
-      order_code: orderCode
-    };
 
-    try {
-      await createOrder(newOrder);
-      setPaymentDetails({ name, price });
-      setCurrentOrderCode(orderCode);
-      setIsPaymentModalOpen(true);
-      if (isCheckout) {
-        setIsCartOpen(false);
-        clearCart();
-      }
-    } catch (error: any) {
-      showToast(`Lỗi: ${error.message || "Không thể khởi tạo đơn hàng"}`, "error");
+    setPaymentDetails({ name, price });
+    setCurrentOrderCode(orderCode);
+    setIsPaymentModalOpen(true);
+
+    if (isCheckout) {
+      setIsCartOpen(false);
+      clearCart();
     }
   };
 
@@ -133,7 +139,7 @@ const HomePage: React.FC = () => {
           </div>
           <div className="relative">
             <div className="aspect-[4/5] rounded-[60px] overflow-hidden shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?auto=format&fit=crop&q=80&w=1200" className="w-full h-full object-cover" alt="Ballerina" />
+              <img src={settings.header_image || "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?auto=format&fit=crop&q=80&w=1200"} className="w-full h-full object-cover" alt={settings.site_name || "Ballerina"} />
             </div>
             <div className="absolute -bottom-6 -left-6 bg-white p-8 rounded-[40px] shadow-xl border border-rose-50 max-w-xs hidden lg:block">
               <div className="flex gap-2 mb-4">
@@ -282,27 +288,48 @@ const HomePage: React.FC = () => {
 // --- Main App with Routes ---
 const App: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/programs" element={<Programs />} />
-      <Route path="/instructors" element={<Instructors />} />
-      <Route path="/facilities" element={<Facilities />} />
-      <Route path="/news" element={<News />} />
-      <Route path="/contact" element={<Contact />} />
+    <SettingsProvider>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/programs" element={<Programs />} />
+        <Route path="/instructors" element={<Instructors />} />
+        <Route path="/facilities" element={<Facilities />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/packages" element={<Packages />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failed" element={<PaymentFailed />} />
 
-      <Route path="/login" element={<Login />} />
-      <Route path="/admin" element={
-        <RequireAuth>
-          <AdminLayout />
-        </RequireAuth>
-      }>
-        <Route path="classes" element={<ClassManager />} />
-        <Route path="products" element={<ProductManager />} />
-        <Route path="orders" element={<OrderManager />} />
-        <Route path="contacts" element={<ContactManager />} />
-        <Route index element={<ClassManager />} />
-      </Route>
-    </Routes>
+        <Route path="/admin/login" element={<Login />} />
+
+        {/* Student Routes */}
+        <Route path="/student/login" element={<StudentLogin />} />
+        <Route path="/student/dashboard" element={<StudentDashboard />} />
+
+        {/* Admin Routes - Protected */}
+        <Route path="/admin" element={
+          <RequireAuth>
+            <AdminLayout />
+          </RequireAuth>
+        }>
+          <Route path="classes" element={<ClassManager />} />
+          <Route path="products" element={<ProductManager />} />
+          <Route path="orders" element={<OrderManager />} />
+          <Route path="contacts" element={<ContactManager />} />
+          <Route path="students" element={<StudentManager />} />
+          <Route path="transactions" element={<TransactionManager />} />
+          <Route path="memberships" element={<MembershipManager />} />
+          <Route path="attendance" element={<AttendanceManager />} />
+          <Route path="packages" element={<PackageManager />} />
+          <Route path="news" element={<NewsManager />} />
+          <Route path="leads" element={<LeadManager />} />
+          <Route path="reports" element={<RevenueReport />} />
+          <Route path="settings" element={<WebSettings />} />
+          <Route index element={<Dashboard />} />
+        </Route>
+      </Routes>
+    </SettingsProvider>
   );
 };
 

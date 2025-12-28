@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import SimplePage from '../../components/SimplePage';
-import { MapPin, Mail, Phone, Clock, Loader2 } from 'lucide-react';
+import { MapPin, Mail, Phone, Clock, Loader2, Map as MapIcon } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useSettings } from '../../contexts/SettingsContext';
 import { createContact } from '../../services/apiService';
 
 const Contact: React.FC = () => {
     const { t } = useLanguage();
     const { showToast } = useToast();
+    const { settings } = useSettings();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -45,21 +47,21 @@ const Contact: React.FC = () => {
                                 <MapPin className="w-6 h-6 text-rose-500 shrink-0 mt-1" />
                                 <div>
                                     <p className="font-bold">{t('address_label')}</p>
-                                    <p className="text-slate-500">123 Arabesque Ave, Brooklyn, NY 11211</p>
+                                    <p className="text-slate-500">{settings.contact_address || '123 Arabesque Ave, Brooklyn, NY 11211'}</p>
                                 </div>
                             </li>
                             <li className="flex gap-4 items-start">
                                 <Mail className="w-6 h-6 text-rose-500 shrink-0 mt-1" />
                                 <div>
                                     <p className="font-bold">{t('email_label')}</p>
-                                    <p className="text-slate-500">hello@dancehouse.com</p>
+                                    <p className="text-slate-500">{settings.contact_email || 'hello@dancehouse.com'}</p>
                                 </div>
                             </li>
                             <li className="flex gap-4 items-start">
                                 <Phone className="w-6 h-6 text-rose-500 shrink-0 mt-1" />
                                 <div>
                                     <p className="font-bold">{t('hotline_label')}</p>
-                                    <p className="text-slate-500">+84 (0) 90 123 4567</p>
+                                    <p className="text-slate-500">{settings.contact_phone || '+84 (0) 90 123 4567'}</p>
                                 </div>
                             </li>
                             <li className="flex gap-4 items-start">
@@ -71,6 +73,26 @@ const Contact: React.FC = () => {
                                 </div>
                             </li>
                         </ul>
+                    </div>
+
+                    {/* Google Maps Embed */}
+                    <div className="w-full h-64 rounded-[40px] overflow-hidden border border-rose-100 shadow-sm bg-slate-50">
+                        {settings.google_maps_link ? (
+                            <iframe
+                                src={settings.google_maps_link}
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                allowFullScreen={true}
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                            ></iframe>
+                        ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-3">
+                                <MapIcon className="w-12 h-12" />
+                                <p className="text-xs font-bold uppercase tracking-widest">Bản đồ chưa được cấu hình</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

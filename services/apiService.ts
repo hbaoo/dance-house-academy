@@ -1,5 +1,5 @@
 
-import { DanceClass, Product, Contact, Order } from '../types';
+import { DanceClass, Product, Contact, Order, Package } from '../types';
 import { supabase, isSupabaseReady } from './supabaseClient';
 
 // Initial Data (Fallback)
@@ -230,6 +230,39 @@ export const updateOrderStatus = async (id: number, status: 'pending' | 'complet
   const orders = getStorage<Order[]>('dance_orders', []);
   const updatedOrders = orders.map(o => o.id === id ? { ...o, status } : o);
   setStorage('dance_orders', updatedOrders);
+};
+
+// --- Packages Service ---
+export const fetchPackages = async (): Promise<Package[]> => {
+  if (shouldUseSupabase()) {
+    const { data, error } = await supabase.from('packages').select('*').order('display_order', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+  return [];
+};
+
+export const addPackage = async (pkg: Omit<Package, 'id'>): Promise<Package> => {
+  if (shouldUseSupabase()) {
+    const { data, error } = await supabase.from('packages').insert([pkg]).select().single();
+    if (error) throw error;
+    return data;
+  }
+  return {} as Package;
+};
+
+export const updatePackage = async (id: string, pkg: Partial<Package>): Promise<void> => {
+  if (shouldUseSupabase()) {
+    const { error } = await supabase.from('packages').update(pkg).eq('id', id);
+    if (error) throw error;
+  }
+};
+
+export const deletePackage = async (id: string): Promise<void> => {
+  if (shouldUseSupabase()) {
+    const { error } = await supabase.from('packages').delete().eq('id', id);
+    if (error) throw error;
+  }
 };
 
 // --- Storage / Upload Service ---

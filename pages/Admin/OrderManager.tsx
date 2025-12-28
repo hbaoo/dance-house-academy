@@ -102,63 +102,88 @@ const OrderManager: React.FC = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã Đơn / Ngày</th>
-                                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Khách hàng</th>
-                                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nội dung / Giá</th>
-                                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái</th>
-                                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Thao tác</th>
+                            <tr className="border-b border-slate-100 bg-slate-50/50">
+                                <th className="p-6 text-xs font-bold uppercase tracking-widest text-slate-500">Mã Đơn</th>
+                                <th className="p-6 text-xs font-bold uppercase tracking-widest text-slate-500">Khách Hàng</th>
+                                <th className="p-6 text-xs font-bold uppercase tracking-widest text-slate-500">Thông Tin Giao Hàng</th>
+                                <th className="p-6 text-xs font-bold uppercase tracking-widest text-slate-500">Nội Dung</th>
+                                <th className="p-6 text-xs font-bold uppercase tracking-widest text-slate-500">Số Tiền</th>
+                                <th className="p-6 text-xs font-bold uppercase tracking-widest text-slate-500">Trạng Thái</th>
+                                <th className="p-6 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Hành động</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {loading && orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-20 text-center text-slate-400">
+                                    <td colSpan={7} className="px-6 py-20 text-center text-slate-400">
                                         <Loader2 className="animate-spin w-8 h-8 mx-auto mb-4 text-rose-500" />
                                         Đang tải dữ liệu...
                                     </td>
                                 </tr>
                             ) : filteredOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-20 text-center text-slate-400">Không tìm thấy đơn hàng nào</td>
+                                    <td colSpan={7} className="px-6 py-20 text-center text-slate-400">Không tìm thấy đơn hàng nào</td>
                                 </tr>
                             ) : (
                                 filteredOrders.map(order => (
-                                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-6">
-                                            <p className="font-bold text-slate-900 mb-1">{order.order_code}</p>
+                                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-0 text-sm">
+                                        <td className="p-6">
+                                            <p className="font-bold text-slate-900 mb-1">#{order.order_code}</p>
                                             <p className="text-[10px] text-slate-400">{new Date(order.created_at!).toLocaleDateString('vi-VN')}</p>
                                         </td>
-                                        <td className="px-6 py-6">
+                                        <td className="p-6">
                                             <p className="font-semibold text-slate-700">{order.customer_name}</p>
                                             <p className="text-xs text-slate-400">{order.customer_email}</p>
                                         </td>
-                                        <td className="px-6 py-6">
-                                            <p className="font-semibold text-slate-700">{order.item_name}</p>
-                                            <p className="text-sm font-bold text-rose-500">{order.amount.toLocaleString('vi-VN')} VND</p>
+                                        <td className="p-6">
+                                            <div className="text-xs text-slate-600 font-medium">{order.customer_phone || 'N/A'}</div>
+                                            <div className="text-[10px] text-slate-400 max-w-[150px] truncate mb-2" title={order.shipping_address}>{order.shipping_address || 'N/A'}</div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {order.shipping_platform && (
+                                                    <span className="px-2 py-0.5 rounded bg-slate-100 text-[8px] font-bold text-slate-600 uppercase">
+                                                        {order.shipping_platform}
+                                                    </span>
+                                                )}
+                                                {order.shipping_service && (
+                                                    <span className="px-2 py-0.5 rounded bg-rose-50 text-[8px] font-bold text-rose-500 uppercase">
+                                                        {order.shipping_service}
+                                                    </span>
+                                                )}
+                                                {order.shipping_fee ? (
+                                                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-[8px] font-bold text-emerald-600 uppercase">
+                                                        +{order.shipping_fee.toLocaleString('vi-VN')}
+                                                    </span>
+                                                ) : null}
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-6">
+                                        <td className="p-6">
+                                            <p className="text-slate-600 italic truncate max-w-[200px]" title={order.item_name}>{order.item_name}</p>
+                                        </td>
+                                        <td className="p-6 font-bold text-rose-500">
+                                            {(order.amount + (order.shipping_fee || 0)).toLocaleString('vi-VN')} VND
+                                        </td>
+                                        <td className="p-6">
                                             <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border ${getStatusStyles(order.status)} uppercase tracking-widest`}>
                                                 {getStatusIcon(order.status)}
-                                                {order.status === 'pending' ? 'Chờ thanh toán' : order.status === 'completed' ? 'Thành công' : 'Đã hủy'}
+                                                {order.status === 'pending' ? 'Chờ' : order.status === 'completed' ? 'Xong' : 'Hủy'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-6 text-right">
+                                        <td className="p-6 text-right">
                                             {order.status === 'pending' && (
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => handleUpdateStatus(order, 'completed')}
                                                         className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
-                                                        title="Xác nhận thanh toán"
+                                                        title="Xác nhận"
                                                     >
-                                                        <CheckCircle2 className="w-5 h-5" />
+                                                        <CheckCircle2 className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleUpdateStatus(order, 'cancelled')}
                                                         className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-                                                        title="Hủy đơn"
+                                                        title="Hủy"
                                                     >
-                                                        <XCircle className="w-5 h-5" />
+                                                        <XCircle className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             )}

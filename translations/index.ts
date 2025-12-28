@@ -69,6 +69,27 @@ export const translations = {
         cart_items: "sản phẩm",
         cart_added: "Đã thêm vào giỏ hàng",
         cart_remove: "Xóa",
+
+        // Checkout
+        checkout_step_info: "Thông tin giao hàng",
+        checkout_step_payment: "Thanh toán",
+        checkout_name: "Họ và tên",
+        checkout_phone: "Số điện thoại",
+        checkout_address: "Địa chỉ nhận hàng",
+        checkout_shipping: "Phí vận chuyển",
+        checkout_shipping_calc: "Tính phí ship",
+        checkout_shipping_estimating: "Đang tính...",
+        checkout_total: "Tổng thanh toán",
+        checkout_next: "Tiếp theo",
+        checkout_back: "Quay lại",
+
+        // Shipping Platforms & Services
+        shipping_platform: "Nền tảng giao hàng",
+        shipping_service: "Dịch vụ",
+        shipping_express: "Hỏa tốc",
+        shipping_2h: "Giao 2h",
+        shipping_4h: "Giao 4h",
+        shipping_standard: "Tiết kiệm",
     },
     en: {
         // Navbar
@@ -139,6 +160,27 @@ export const translations = {
         cart_items: "items",
         cart_added: "Added to cart",
         cart_remove: "Remove",
+
+        // Checkout
+        checkout_step_info: "Shipping Information",
+        checkout_step_payment: "Payment",
+        checkout_name: "Full Name",
+        checkout_phone: "Phone Number",
+        checkout_address: "Shipping Address",
+        checkout_shipping: "Shipping Fee",
+        checkout_shipping_calc: "Estimate Shipping",
+        checkout_shipping_estimating: "Estimating...",
+        checkout_total: "Final Total",
+        checkout_next: "Next Step",
+        checkout_back: "Go Back",
+
+        // Shipping Platforms & Services
+        shipping_platform: "Delivery Platform",
+        shipping_service: "Service Type",
+        shipping_express: "Express",
+        shipping_2h: "2h Delivery",
+        shipping_4h: "4h Delivery",
+        shipping_standard: "Standard",
     }
 };
 

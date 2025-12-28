@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>PayOS Signature Tester</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+
+<body>
+    <h1>PayOS Signature Verification Tool</h1>
+    <pre id="output"></pre>
+
+    <script>
+        const CHECKSUM_KEY = 'e19f33eae7723fe90e4f907006121a574ae370397514aa1229d5e3a0f3cb4fd8';
+
+        const dataString = 'amount=2000000&buyerEmail=zzbaozz98@gmail.com&buyerName=Lư Hùng Bảo&buyerPhone=0967788013&cancelUrl=http://localhost:3000/payment/failed?orderCode=1766909539&description=Thanh toán Gói Tháng - Dance House Academy&expiredAt=1766910440&items=[{"name":"Gói Tháng","price":2000000,"quantity":1}]&orderCode=1766909539&returnUrl=http://localhost:3000/payment/success?orderCode=1766909539';
+
+        // Generate signature
+        const signature = CryptoJS.HmacSHA256(dataString, CHECKSUM_KEY).toString();
+
+        const output = document.getElementById('output');
+        output.textContent = `
+=== PayOS Signature Test ===
+
+Checksum Key: ${CHECKSUM_KEY}
+Checksum Key Length: ${CHECKSUM_KEY.length} (should be 64)
+
+Data String:
+${dataString}
+
+Generated Signature:
+${signature}
+
+Your Current Signature:
+393d0760e365bfe993664c5724f4be68e42c66c9557b983b837e9e4f8eb77af5
+
+Match? ${signature === '393d0760e365bfe993664c5724f4be68e42c66c9557b983b837e9e4f8eb77af5'}
+
+---
+
+Possible Issues:
+1. Checksum Key incorrect or has extra spaces
+2. CryptoJS vs Node.js crypto difference
+3. Character encoding issues (UTF-8)
+4. URL encoding in cancelUrl/returnUrl
+
+Try manually computing on PayOS side or contact support.
+`;
+    </script>
+</body>
+
+</html>
